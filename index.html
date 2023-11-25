@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blender Object Outlines</title>
+</head>
+
+<body>
+  <canvas id="myCanvas" width="1920" height="1080" style="border:1px solid #000;"></canvas>
+  <script type="module">
+    // Replace this with the JSON output from your Python script
+    var data = await fetch('/lines.json');
+    data = await data.json();
+
+    console.log(data)
+    var canvas = document.getElementById("myCanvas");
+    var ctx = canvas.getContext("2d");
+
+    function drawDot(x, y) {
+        // Draw a dot at the specified coordinates
+        ctx.arc(x, y, 5, 0, 2 * Math.PI);
+    }
+
+
+    let scaling = 250;
+    
+    let [translation_x, translation_y] = [750, 650];
+    function drawMesh(meshTriangles) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear the canvas for each frame
+
+      meshTriangles.forEach(triangles => {
+        ctx.beginPath();
+        triangles.forEach(triangle => {
+          triangle.forEach(vertex => {
+            // Scale and translate the coordinates to fit into a 1000x1000 canvas
+            var x = vertex[0] * scaling + translation_x;
+            var y = -vertex[1] * scaling + translation_y; // Negate the y-coordinate to match Blender's coordinate system
+            ctx.lineTo(x, y);
+            drawDot(x, y)
+
+          });
+          // Close the path for each triangle
+          ctx.closePath();
+        });
+        ctx.stroke();
+      });
+    }
+    const fpsToMs = fps => 1000 / fps;
+
+    let currentFrame = 0;
+    function animate() {
+      // Draw the current frame
+      drawMesh(data.frames[currentFrame].meshes);
+
+      // Move to the next frame
+      currentFrame++;
+      if (currentFrame >= data.frames.length) {
+        currentFrame = 0; // Loop back to the first frame
+      }
+
+      // Request the next animation frame
+      setTimeout(() => animate(), fpsToMs(26))
+    }
+
+    // Start the animation
+    animate();
+  </script>
+</body>
+
+</html>
